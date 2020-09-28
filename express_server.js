@@ -18,12 +18,17 @@ function generateRandomString() {
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
-  // "longBodyURL": req.body.longURL
 };
 
 app.set("view engine", "ejs");
 
-// // all the read routes
+// all the read routes
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
+});
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
