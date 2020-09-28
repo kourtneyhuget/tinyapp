@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/kourtneyhuget/tinyapp/issues"
   },
-  "homepage": "https://github.com/kourtneyhuget/tinyapp#readme"
+  "homepage": "https://github.com/kourtneyhuget/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
