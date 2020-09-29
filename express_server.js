@@ -55,6 +55,11 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// app.get(urlInput), (req, res) => {
+//   if (urlInput = )
+//   res.status(404).send('Error message');
+// });
+
 // // all my create routes
 
 app.post("/urls", (req, res) => {
