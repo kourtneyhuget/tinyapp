@@ -107,9 +107,12 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const user = user[userID];
+  const userID = req.cookies['user_id'];
+  const userDb = urlsForUser(userId);
   const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
+    urls: userDb,
+    user: user
   };
   res.render("urls_index", templateVars);
 });
