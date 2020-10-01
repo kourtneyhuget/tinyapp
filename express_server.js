@@ -46,7 +46,7 @@ const urlsForUser = (id) => {
         userID: id
       };
     }
-  }
+  } return userDb;
 };
 
 // helper function for DRY code
@@ -63,9 +63,11 @@ app.set("view engine", "ejs");
 
 // all the read routes
 app.get("/login", (req, res) => {
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
+    user: user
   };
   res.render("urls_login", templateVars);
 });
@@ -87,10 +89,12 @@ app.get("/u/:shortURL", (req, res) => {
 // looking to see if cookie exists in database on routes that are protected
 // redirect to register
 app.get("/urls/new", (req, res) => {
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: user
   };
-  if (req.cookies['user_id']) {
+  if (userId) {
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
@@ -98,17 +102,19 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.cookies["user_id"]]
+    user: user
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const user = user[userID];
-  const userID = req.cookies['user_id'];
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
   const userDb = urlsForUser(userId);
   const templateVars = {
     urls: userDb,
@@ -147,16 +153,23 @@ app.post("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  const userID = req.cookies["user_id"];
+  const userId = req.cookies["user_id"];
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies["user_id"]
+    userID: userId
   };
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id]["longURL"] = req.body.newLongUrl;
+  const shortURL = request.params.id;
+  const userDb = urlsForUser(req.cookies['user_id']);
+  const longURL = request.body.longURL;
+  if (longURL in userDb) {
+    urlDatabase[shortURL] = longURL;
+  } else {
+    res.status(403).send('You do not have access to edit');
+  }
   res.redirect("/urls");
 });
 
@@ -188,7 +201,12 @@ app.listen(PORT, () => {
 
 // all my delete routes
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
+  const userDb = urlsForUser(req.cookies['user_id']);
+  if (req.params.shortURL in userDb) {
+    delete urlDatabase[req.params.shortURL];
+  } else {
+    res.status(403).send("You do not have access to delete\n");
+  }
   res.redirect("/urls");
 });
 
