@@ -37,6 +37,15 @@ const users = {
   }
 };
 
+const ifEmail = (email) => {
+  for (let value in users) {
+    if (users[value].email === email) {
+      return value;
+    }
+  }
+  return false;
+};
+
 app.set("view engine", "ejs");
 
 // all the read routes
@@ -98,6 +107,19 @@ app.get("/hello", (req, res) => {
 });
 
 // // all my create routes
+app.post("/login", (req, res) => {
+  if (!ifEmail(req.body.email)) {
+    res.status(403).send('Incorrect email');
+  } else {
+    const id = ifEmail(req.body.email);
+    if (users[id].password !== req.body.password) {
+      res.status(403).send('Incorrect password');
+    } else {
+      res.cookie('user_id', id);
+    }
+    res.redirect('/urls');
+  }
+});
 
 app.post("/urls", (req, res) => {
   const longBodyURL = req.body.longURL;
@@ -113,36 +135,29 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/login", (req, res) => {
-  // res.cookie('user_id', newUserRandomID);
-  res.redirect("/urls");
-});
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/urls");
 });
 
 app.post("/register", (req, res) => {
-  //check to make sure user input is complete
-  if (req.body.email === "" || req.body.password === "") {
-    res.send(400, 'Missing information');
-  };
-  //check to make sure email does not already exist
-  for (let value in users) {
-    const userObj = users[value];
-    if (userObj.email === req.body.email) {
-      res.send(400, 'Email exists');
-    }
-  };
   const newUserRandomID = generateRandomString();
   users[newUserRandomID] = {
     id: newUserRandomID,
     email: req.body.email,
     password: req.body.password
   };
-  res.cookie('user_id', newUserRandomID);
-  res.redirect("/urls");
+
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send('Field is empty');
+  } else if (ifEmail(req.body.email)) {
+    res.status(400).send('Email exists');
+  } else {
+    users[newUserID] = newUser;
+    res.cookie('user_id', newUserID);
+    res.redirect('urls');
+  }
 });
 
 app.listen(PORT, () => {
