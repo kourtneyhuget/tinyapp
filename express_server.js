@@ -37,6 +37,18 @@ const users = {
   }
 };
 
+const urlsForUser = (id) => {
+  const userDb = {};
+  for (let key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      userDb[key] = {
+        longURL: urlDatabase[key].longURL,
+        userID: id
+      };
+    }
+  }
+};
+
 // helper function for DRY code
 const ifEmail = (email) => {
   for (let value in users) {
