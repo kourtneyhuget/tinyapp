@@ -95,9 +95,11 @@ redirect to login
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies["user_id"]]
   };
+  console.log(urlDatabase[req.params.shortURL].longURL);
   res.render("urls_show", templateVars);
 });
 
@@ -137,11 +139,11 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const longBodyURL = req.body.longURL;
-  // urlDatabase[shortURL] = [userID][req.cookies["user_id"]];
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longBodyURL;
-  console.log(urlDatabase[shortURL]);
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies["user_id"]
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
