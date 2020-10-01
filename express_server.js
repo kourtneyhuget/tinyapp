@@ -20,8 +20,8 @@ function generateRandomString() {
   return result;
 }
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 const users = {
@@ -85,13 +85,6 @@ app.get("/urls/new", (req, res) => {
     res.redirect("/login");
   }
 });
-/* 
-if (the cookie) {
-res.render("" , templateVars)
-} else {
-redirect to login
-}
-*/
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
@@ -99,7 +92,6 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies["user_id"]]
   };
-  console.log(urlDatabase[req.params.shortURL].longURL);
   res.render("urls_show", templateVars);
 });
 
@@ -140,6 +132,8 @@ app.post("/login", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  const userID = req.cookies["user_id"];
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     userID: req.cookies["user_id"]
