@@ -125,7 +125,7 @@ app.post("/login", (req, res) => {
     } else {
       res.cookie('user_id', id);
     }
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
 });
 
@@ -141,7 +141,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.newLongUrl;
+  urlDatabase[req.params.id]["longURL"] = req.body.newLongUrl;
   res.redirect("/urls");
 });
 
