@@ -1,6 +1,7 @@
 const express = require("express");
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(cookieParser());
@@ -44,7 +45,6 @@ const users = {
 // helper function to store longURL information under a userId
 const urlsForUser = (id) => {
   const userDb = {};
-  console.log(id);
   for (let key in urlDatabase) {
     if (urlDatabase[key].userId === id) {
       userDb[key] = {
@@ -56,13 +56,13 @@ const urlsForUser = (id) => {
 };
 
 // helper function to check if email already exists when a user is registering 
-const ifEmail = (email) => {
+const getUserByEmail = (email) => {
   for (let value in users) {
     if (users[value].email === email) {
-      return value;
+      return users[value];
     }
   }
-  return false;
+  return null;
 };
 
 app.set("view engine", "ejs");
@@ -89,7 +89,6 @@ app.get("/register", (req, res) => {
 app.get("/urls", (req, res) => {
   const userId = req.cookies['user_id'];
   const userDb = urlsForUser(userId);
-  console.log(userDb);
   const user = users[userId];
   if (!user) {
     res.status(403).send('Please login or register');
@@ -148,15 +147,18 @@ app.get("/hello", (req, res) => {
 
 // // all the create routes
 app.post("/login", (req, res) => {
-  const id = ifEmail(req.body.email);
-  if (!ifEmail(req.body.email)) {
+  const user = getUserByEmail(req.body.email);
+  if (!user) {
     res.status(403).send('Incorrect email');
-  } else {
-    if (users[id].password !== req.body.password) {
-      res.status(403).send('Incorrect password');
-    }
+    return;
   }
-  res.cookie('user_id', id);
+
+  const passwordGood = bcrypt.compareSync(req.body.password, user.password);
+  if (!passwordGood) {
+    res.status(403).send('Incorrect password');
+    return;
+  }
+  res.cookie('user_id', user.id);
   return res.redirect('/urls');
 });
 
@@ -190,20 +192,27 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  if (req.body.email === "" || req.body.password === "") {
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  if (!req.body.email || !req.body.password) {
     res.status(400).send('Field is empty');
-  } else if (ifEmail(req.body.email)) {
-    res.status(400).send('Email exists');
-  } else {
-    const newUserRandomID = generateRandomString();
-    users[newUserRandomID] = {
-      id: newUserRandomID,
-      email: req.body.email,
-      password: req.body.password
-    };
-    res.cookie('user_id', newUserRandomID);
-    res.redirect('/urls');
+    return;
   }
+
+  const user = getUserByEmail(req.body.email);
+  if (user) {
+    res.status(400).send('Email exists');
+    return;
+  }
+  const newUserRandomID = generateRandomString();
+  users[newUserRandomID] = {
+    id: newUserRandomID,
+    email: req.body.email,
+    password: hashedPassword
+  };
+  res.cookie('user_id', newUserRandomID);
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
