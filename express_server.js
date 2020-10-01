@@ -40,6 +40,14 @@ const users = {
 app.set("view engine", "ejs");
 
 // all the read routes
+app.get("/login", (req, res) => {
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_login", templateVars);
+});
+
 app.get("/register", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
@@ -89,12 +97,6 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// app.get("urls/new", (req, res) => {
-//   if (req.params.body === undefined)
-//     res.redirect(301, '/404.html');
-// });
-
-
 // // all my create routes
 
 app.post("/urls", (req, res) => {
@@ -122,9 +124,11 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  //check to make sure user input is complete
   if (req.body.email === "" || req.body.password === "") {
     res.send(400, 'Missing information');
   };
+  //check to make sure email does not already exist
   for (let value in users) {
     const userObj = users[value];
     if (userObj.email === req.body.email) {
@@ -151,10 +155,4 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-
-  // if (res.cookie('username') == undefined) {
-  //   res.redirect("/urls");
-  // }
-  // res.redirect(301, '/404.html');
-  // res.cookie();
 
