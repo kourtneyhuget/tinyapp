@@ -16,11 +16,12 @@ const testUsers = {
 };
 
 describe('getUserByEmail', function () {
-  // unit test to confirm getUserByEmail function returns a user object when provided email in database
-  it('should return an object if email exists in database ', function () {
+  // unit test to confirm is email exists within testUser object, the object is returned
+  it('should return a user with valid email', function () {
     const user = getUserByEmail("user@example.com", testUsers);
-    assert.isObject(testUsers, "testUsers is an object");
+    assert.isObject(testUsers, "returns a user that exists in database");
   });
+  // unit test to confirm if email does not exist within testUser object, undefined will be returned
   it('should return undefined if an email is not in our users database', function () {
     const user = getUserByEmail("userTest@example.com", testUsers);
     const expectedOutput = "undefined";
