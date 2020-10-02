@@ -1,29 +1,19 @@
+const { getUserByEmail, urlsForUser, generateRandomString } = require('./helpers');
 const express = require("express");
-const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-
+const bodyParser = require("body-parser");
+const { request, response } = require("express");
 const app = express();
+
+const PORT = 8080;
+
 app.use(cookieSession({
   name: 'session',
   keys: ['keys1', 'keys2']
 }));
-
-const bodyParser = require("body-parser");
-const { request } = require("express");
 app.use(bodyParser.urlencoded({ extended: true }));
-
-//function to create a random string for shortURL or userId 
-function generateRandomString() {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  const length = 6;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
+app.set("view engine", "ejs");
 
 // object to store shortURL/longURL and the userId
 const urlDatabase = {
@@ -45,31 +35,6 @@ const users = {
   }
 };
 
-// helper function to store longURL information under a userId
-const urlsForUser = (id) => {
-  const userDb = {};
-  for (let key in urlDatabase) {
-    if (urlDatabase[key].userId === id) {
-      userDb[key] = {
-        longURL: urlDatabase[key].longURL,
-        userId: id
-      };
-    }
-  } return userDb;
-};
-
-// helper function to check if email exists in object when a user is registering or null if not found
-const getUserByEmail = (email, database) => {
-  for (let value in database) {
-    if (database[value].email === email) {
-      return database[value];
-    }
-  }
-  return null;
-};
-
-app.set("view engine", "ejs");
-
 // all the read routes
 app.get("/login", (req, res) => {
   const userId = req.session.user_id;
@@ -89,9 +54,10 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+// if user does not exist page will not display, message to login or register will show
 app.get("/urls", (req, res) => {
   const userId = req.session.user_id;
-  const userDb = urlsForUser(userId);
+  const userDb = urlsForUser(userId, urlDatabase);
   const user = users[userId];
   if (!user) {
     res.status(403).send('Please login or register');
@@ -109,6 +75,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+// only logged in/registered users can create new short URLS
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
@@ -122,6 +89,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+// only logged in/registered users can go to specific shortURL page
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
@@ -137,7 +105,7 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect('/login');
 });
 
 app.get("/urls.json", (req, res) => {
@@ -149,6 +117,8 @@ app.get("/hello", (req, res) => {
 });
 
 // // all the create routes
+
+// if user information is not in database, return incorrect email or password message
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email, users);
   if (!user) {
@@ -161,12 +131,12 @@ app.post("/login", (req, res) => {
     res.status(403).send('Incorrect password');
     return;
   }
-  // res.cookie('user_id', user.id);
+  // starts cookie session associated to user_id
   req.session.user_id = user.id;
   return res.redirect('/urls');
 });
 
-
+// assign shortURL a randomly generated string to assign with longURL in database 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const userId = req.session.user_id;
@@ -177,10 +147,11 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+// if user_id is in database, store URL information under user-id so only that user has access
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const newLongURL = req.body.newLongURL;
-  const userDb = urlsForUser(req.session.user_id);
+  const userDb = urlsForUser(req.session.user_id, urlDatabase);
   for (let key in userDb) {
     if (key === shortURL) {
       urlDatabase[shortURL].longURL = newLongURL;
@@ -190,11 +161,13 @@ app.post("/urls/:id", (req, res) => {
   res.status(403).send('You do not have access to edit');
 });
 
+// logout deletes cookies
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
 });
 
+// hash password that user inputs and store hashed password in users object
 app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -224,8 +197,9 @@ app.listen(PORT, () => {
 });
 
 // all the delete routes
+// only logged in/registered users are able to delete URLS associated to their user_id
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userDb = urlsForUser(req.session.user_id);
+  const userDb = urlsForUser(req.session.user_id, urlDatabase);
   if (req.params.shortURL in userDb) {
     delete urlDatabase[req.params.shortURL];
   } else {
