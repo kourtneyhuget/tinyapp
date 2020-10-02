@@ -58,11 +58,11 @@ const urlsForUser = (id) => {
   } return userDb;
 };
 
-// helper function to check if email already exists when a user is registering 
-const getUserByEmail = (email) => {
-  for (let value in users) {
-    if (users[value].email === email) {
-      return users[value];
+// helper function to check if email exists in object when a user is registering or null if not found
+const getUserByEmail = (email, database) => {
+  for (let value in database) {
+    if (database[value].email === email) {
+      return database[value];
     }
   }
   return null;
@@ -150,7 +150,7 @@ app.get("/hello", (req, res) => {
 
 // // all the create routes
 app.post("/login", (req, res) => {
-  const user = getUserByEmail(req.body.email);
+  const user = getUserByEmail(req.body.email, users);
   if (!user) {
     res.status(403).send('Incorrect email');
     return;
@@ -204,7 +204,7 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  const user = getUserByEmail(req.body.email);
+  const user = getUserByEmail(req.body.email, users);
   if (user) {
     res.status(400).send('Email exists');
     return;
